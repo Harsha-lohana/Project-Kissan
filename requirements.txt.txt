@@ -1,0 +1,12 @@
+Flask
+requests
+google-cloud-texttospeech
+google-cloud-speech
+google-cloud-storage
+google-cloud-dialogflow
+gtts
+speechrecognition
+scipy
+numpy
+openai
+firebase-admin
