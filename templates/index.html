@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Kisan</title>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0fdf4;
+            color: #2e3b2f;
+        }
+
+        header {
+            background-color: #2e7d32;
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: #ffffff33;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 128, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #2e7d32;
+        }
+
+        button {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #e8f5e9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1 id="title">🌾 Project Kisan</h1>
+        <p id="subtitle">स्मार्ट खेती सहायक • Smart Farming Assistant</p>
+        <div class="lang-switch" onclick="toggleLanguage()">🌐 हिंदी / English</div>
+    </header>
+
+    <section class="container">
+        <div class="card">
+            <h2 id="cropTitle">🌿 फसल की स्थिति</h2>
+            <p id="cropStatus">स्थिति: <span id="cropHealth">लोड हो रहा है...</span></p>
+        </div>
+
+     <div class="card" onclick="window.location.href='/mandi-ui'" style="cursor: pointer;">
+    <h2 id="mandiTitle">💹 मंडी कीमतें</h2>
+    <p id="mandiInfo">टमाटर: <span id="mandiPrice">--</span></p>
+</div>
+
+        <div class="card">
+            <h2 id="weatherTitle">🌤️ मौसम</h2>
+            <p id="weatherInfo">आज: --</p>
+        </div>
+        <div class="card" onclick="window.location.href='/predict_form'" style="cursor: pointer;">
+    <h2 id="weatherTitle">🌾 फसल पूर्वानुमान</h2>
+    <p id="weatherInfo">क्लिक करके पूर्वानुमान देखें</p>
+</div>
+
+
+        <div class="card">
+            <h2>🎙️ <span id="voiceLabel">AI से बात करें</span></h2>
+            <button onclick="startVoice()">🎤 <span id="speakBtn">बोलें / Speak</span></button>
+        </div>
+
+        <div class="card">
+            <h2>📞 <span id="callLabel">हेल्पलाइन</span></h2>
+            <button onclick="simulateCall()">📞 <span id="callBtn">कॉल करें / Call</span></button>
+        </div>
+    </section>
+
+    <div class="footer">
+        © 2025 AutoNeura
+    </div>
+
+    <!-- Main Logic -->
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "your-project-id.firebaseapp.com",
+            databaseURL: "https://your-project-id-default-rtdb.firebaseio.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Realtime data from Firebase
+        db.ref('kisan/crop_health').on('value', snap => {
+            document.getElementById("cropHealth").textContent = snap.val();
+        });
+
+        db.ref('kisan/mandi_prices/tomato').on('value', snap => {
+            document.getElementById("mandiPrice").textContent = `₹${snap.val()}/kg`;
+        });
+
+        db.ref('kisan/weather/today').on('value', snap => {
+            document.getElementById("weatherInfo").textContent = snap.val();
+        });
+
+        // Voice recognition (native language)
+  function startVoice() {
+    window.location.href = "/farmer-chat"; 
+    // const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    // recognition.lang = currentLang === "hi" ? "hi-IN" : "en-US";
+    // recognition.start();
+
+    // recognition.onresult = (event) => {
+    //     const transcript = event.results[0][0].transcript;
+    //     const message = currentLang === "hi"
+    //         ? `आपने कहा: ${transcript}`
+    //         : `You said: ${transcript}`;
+
+    //     speak(message);
+
+    //     // Redirect to index.html after a short delay (e.g., after voice finishes)
+    //     setTimeout(() => {
+    //         window.location.href = "chat.html";
+    //     }, 2500); // Wait for 2.5 seconds (adjust as needed)
+    // };
+}
+
+
+        // Voice output
+        function speak(message) {
+            const synth = window.speechSynthesis;
+            const utter = new SpeechSynthesisUtterance(message);
+            utter.lang = currentLang === "hi" ? "hi-IN" : "en-US";
+            synth.speak(utter);
+        }
+
+        function simulateCall() {
+            const msg = currentLang === "hi"
+                ? "किसान हेल्पलाइन से जुड़ रहे हैं, कृपया प्रतीक्षा करें।"
+                : "Connecting to Kisan helpline. Please wait.";
+            speak(msg);
+        }
+
+        // Language switch
+        let currentLang = "hi";
+        function toggleLanguage() {
+            currentLang = currentLang === "hi" ? "en" : "hi";
+
+            document.getElementById("title").innerText = currentLang === "hi" ? "🌾 Project Kisan" : "🌾 Project Kisan";
+            document.getElementById("subtitle").innerText = currentLang === "hi" ? "स्मार्ट खेती सहायक • Smart Farming Assistant" : "Smart Farming Assistant • स्मार्ट खेती सहायक";
+
+            document.getElementById("cropTitle").innerText = currentLang === "hi" ? "🌿 फसल की स्थिति" : "🌿 Crop Health";
+            document.getElementById("cropStatus").innerText = currentLang === "hi" ? "लोड हो रहा है..." : "Loading..";
+            document.getElementById("mandiTitle").innerText = currentLang === "hi" ? "💹 मंडी कीमतें" : "💹 Mandi Prices";
+            document.getElementById("mandiInfo").innerText = currentLang === "hi" ? "टमाटर: " : "Tomato:--";
+            document.getElementById("weatherTitle").innerText = currentLang === "hi" ? "🌤️ मौसम" : "🌤️ Weather";
+            document.getElementById("weatherInfo").innerText = currentLang === "hi" ? "आज: --" : "Today:--";
+
+            document.getElementById("voiceLabel").innerText = currentLang === "hi" ? "AI से बात करें" : "Talk to AI";
+            document.getElementById("speakBtn").innerText = currentLang === "hi" ? "बोलें / Speak" : "Speak";
+
+            document.getElementById("callLabel").innerText = currentLang === "hi" ? "हेल्पलाइन" : "Helpline";
+            document.getElementById("callBtn").innerText = currentLang === "hi" ? "कॉल करें / Call" : "Call";
+        }
+    </script>
+
+</body>
+
+</html>

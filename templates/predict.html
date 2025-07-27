@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crop Prediction - Project Kisan</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 50px auto;
+      max-width: 600px;
+      background: #f4f4f4;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2e7d32;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input {
+      padding: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      background: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    li {
+      background: #e8f5e9;
+      margin: 10px 0;
+      padding: 12px;
+      border-left: 6px solid #43a047;
+      border-radius: 6px;
+      font-size: 18px;
+    }
+
+    .loading {
+      text-align: center;
+      font-weight: bold;
+      color: #888;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🌾 Crop Recommendation System</h2>
+
+  <form id="predictForm">
+    <label>Nitrogen (N): <input type="number" name="N" required></label>
+    <label>Phosphorus (P): <input type="number" name="P" required></label>
+    <label>Potassium (K): <input type="number" name="K" required></label>
+    <label>Temperature (°C): <input type="number" step="0.1" name="temperature" required></label>
+    <label>Humidity (%): <input type="number" step="0.1" name="humidity" required></label>
+    <label>pH Level: <input type="number" step="0.1" name="ph" required></label>
+    <label>Rainfall (mm): <input type="number" name="rainfall" required></label>
+    <button type="submit">Predict Crop</button>
+  </form>
+
+  <div id="status" class="loading" style="display: none;">Fetching prediction...</div>
+  <ul id="cropList"></ul>
+<script>
+  document.getElementById("predictForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const form = document.getElementById("predictForm");
+    const formData = new FormData(form);
+    const input = {};
+    formData.forEach((value, key) => {
+      input[key] = parseFloat(value);
+    });
+
+    const status = document.getElementById("status");
+    const cropList = document.getElementById("cropList");
+    cropList.innerHTML = "";
+    status.style.display = "block";
+    status.className = "loading";
+    status.innerText = "Fetching prediction...";
+
+    try {
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input)
+      });
+
+      const data = await response.json();
+      const crops = data.predicted_classes || [];
+
+      if (Array.isArray(crops) && crops.length > 0) {
+        status.style.display = "none";
+
+        // Limit to 5 crops only
+        crops.slice(0, 5).forEach(crop => {
+          const li = document.createElement("li");
+          li.textContent = crop;
+          cropList.appendChild(li);
+        });
+
+        // Hide the form
+        form.style.display = "none";
+      } else {
+        status.className = "error";
+        status.innerText = "No crops found.";
+      }
+    } catch (error) {
+      status.className = "error";
+      status.innerText = "Error fetching prediction.";
+      console.error("Prediction error:", error);
+    }
+  });
+</script>
+</body>
+</html>

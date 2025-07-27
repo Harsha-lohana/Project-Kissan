@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crop Recommendation - Project Kisan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        .lang-btn {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        .lang-btn button {
+            padding: 6px 12px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin: 15px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button.recommend {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="lang-btn">
+        <button onclick="toggleLanguage()">Switch Language / भाषा बदलें</button>
+    </div>
+
+    <h2 id="title">🌾 AI Crop Recommendation</h2>
+
+    <div class="form-group">
+        <label id="soil-label" for="soil">Soil Type:</label>
+        <select id="soil">
+            <option value="sandy">Sandy / रेतीली</option>
+            <option value="loamy">Loamy / दोमट</option>
+            <option value="clay">Clay / चिकनी</option>
+            <option value="black">Black / काली</option>
+            <option value="red">Red / लाल</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label id="ph-label" for="ph">Soil pH (1-14):</label>
+        <input type="number" id="ph" min="1" max="14" placeholder="e.g. 6.5 / उदाहरण 6.5">
+    </div>
+
+    <div class="form-group">
+        <label id="rain-label" for="rain">Annual Rainfall (in mm):</label>
+        <input type="number" id="rain" placeholder="e.g. 800 / उदाहरण 800">
+    </div>
+
+    <button class="recommend" onclick="recommendCrop()" id="recommend-btn">Recommend Crop / फसल सुझाव दें</button>
+
+    <div id="result"></div>
+    <div class="form-group">
+    <label for="N">N (Nitrogen):</label>
+    <input type="number" id="N" placeholder="e.g. 90">
+</div>
+
+<div class="form-group">
+    <label for="P">P (Phosphorus):</label>
+    <input type="number" id="P" placeholder="e.g. 40">
+</div>
+
+<div class="form-group">
+    <label for="K">K (Potassium):</label>
+    <input type="number" id="K" placeholder="e.g. 50">
+</div>
+
+<div class="form-group">
+    <label for="temperature">Temperature (°C):</label>
+    <input type="number" step="0.1" id="temperature" placeholder="e.g. 25.5">
+</div>
+
+<div class="form-group">
+    <label for="humidity">Humidity (%):</label>
+    <input type="number" step="0.1" id="humidity" placeholder="e.g. 80">
+</div>
+
+    <script>
+        let isHindi = false;
+
+    async function predictModel() {
+        const inputData = {
+            N: parseFloat(document.getElementById("N").value),
+            P: parseFloat(document.getElementById("P").value),
+            K: parseFloat(document.getElementById("K").value),
+            temperature: parseFloat(document.getElementById("temperature").value),
+            humidity: parseFloat(document.getElementById("humidity").value),
+            ph: parseFloat(document.getElementById("ph").value),
+            rainfall: parseFloat(document.getElementById("rain").value)
+        };
+
+        document.getElementById("result").innerHTML = isHindi
+            ? "<em>कृपया प्रतीक्षा करें... भविष्यवाणी की जा रही है...</em>"
+            : "<em>Please wait... predicting crops...</em>";
+
+        try {
+            const res = await fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(inputData)
+            });
+
+            const data = await res.json();
+            const crops = data.predicted_crop;
+
+            if (Array.isArray(crops) && crops.length > 0) {
+                let resultHtml = (isHindi ? "🔍 सुझाई गई फसलें:" : "🔍 Suggested Crops:") + "<ul>";
+                crops.forEach(crop => {
+                    resultHtml += `<li>${crop}</li>`;
+                });
+                resultHtml += "</ul>";
+                document.getElementById("result").innerHTML = resultHtml;
+            } else {
+                document.getElementById("result").innerHTML = isHindi
+                    ? "कोई सुझाव नहीं मिला।"
+                    : "No crops were predicted.";
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById("result").innerHTML = isHindi
+                ? "भविष्यवाणी में त्रुटि हुई।"
+                : "Error during prediction.";
+        }
+    }
+</script>
+
+</body>
+
+</html>

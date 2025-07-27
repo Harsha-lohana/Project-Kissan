@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>किसान चैट | Project Kisan</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #f0fff4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      background-color: #ffffff;
+      padding: 20px;
+      width: 95%;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+
+    .alert-box {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ffeeba;
+      border-radius: 5px;
+      display: none;
+    }
+
+    #userInput {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      background-color: #43a047;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2e7d32;
+    }
+
+    #responseBox {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border-left: 5px solid #4caf50;
+      border-radius: 4px;
+      text-align: left;
+    }
+
+    /* Loader styling */
+    #loader {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #43a047;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 600px) {
+      .chat-container {
+        padding: 15px;
+      }
+
+      button, #userInput {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <h2>कृपया अपना सवाल पूछें</h2>
+
+    <!-- Alert Box -->
+    <div id="alertBox" class="alert-box"></div>
+
+    <!-- Chat Input -->
+    <input type="text" id="userInput" placeholder="यहां अपना सवाल टाइप करें..." />
+    <button onclick="sendToFlask()">भेजें</button>
+
+    <!-- Loader -->
+    <div id="loader">
+      <div class="spinner"></div>
+      <p>उत्तर की प्रतीक्षा हो रही है...</p>
+    </div>
+
+    <!-- Response -->
+    <div id="responseBox"></div>
+  </div>
+
+  <!-- Hidden div to hold alerts from Flask -->
+  <div id="alert-data" data-alerts='{{ alerts | default([]) | tojson | safe }}' style="display: none;"></div>
+
+  <script>
+    const alertDiv = document.getElementById("alert-data");
+    const alertsFromServer = JSON.parse(alertDiv.dataset.alerts || "[]");
+
+    function showAlerts() {
+      const alertBox = document.getElementById('alertBox');
+      if (alertsFromServer.length > 0) {
+        alertBox.innerText = "⚠️ सूचना: " + alertsFromServer.join(', ');
+        alertBox.style.display = "block";
+      }
+    }
+
+    async function sendToFlask() {
+      const input = document.getElementById('userInput').value.trim();
+      const loader = document.getElementById('loader');
+      const responseBox = document.getElementById('responseBox');
+
+      if (!input) {
+        alert("कृपया सवाल लिखें।");
+        return;
+      }
+
+      loader.style.display = "block";
+      responseBox.innerText = "";
+
+      try {
+        const response = await fetch("/ask-farmer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message: input })
+        });
+
+        const data = await response.json();
+        responseBox.innerText = "💬 जवाब: " + data.reply;
+      } catch (error) {
+        console.error("Error contacting server:", error);
+        responseBox.innerText = "⚠️ सर्वर से जवाब नहीं मिला। कृपया बाद में प्रयास करें।";
+      } finally {
+        loader.style.display = "none";
+      }
+    }
+
+    window.onload = showAlerts;
+  </script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>📊 Mandi Price Checker – Project Kisan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f7f9;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2b5b2e;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      max-width: 800px;
+      margin: 0 auto 20px;
+    }
+
+    label {
+      flex: 1 1 40%;
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+    }
+
+    input {
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #2b5b2e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      align-self: center;
+    }
+
+    button:hover {
+      background: #3d8142;
+    }
+
+    #results {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background-color: #e1f5e6;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #f9f9f9;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      form {
+        flex-direction: column;
+      }
+
+      label {
+        flex: 1 1 100%;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        background: white;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        padding: 10px;
+      }
+
+      td {
+        border: none;
+        padding: 8px 0;
+        font-size: 0.95rem;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: inline-block;
+        width: 130px;
+        color: #2b5b2e;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>🌾 Daily Mandi Price (मंडी भाव)</h1>
+
+  <form id="filterForm">
+    <label>राज्य (State)
+      <input type="text" name="state" placeholder="e.g., Kerala" />
+    </label>
+    <label>ज़िला (District)
+      <input type="text" name="district" placeholder="e.g., Kannur" />
+    </label>
+    <label>मंडी (Market)
+      <input type="text" name="market" placeholder="e.g., Irikkur" />
+    </label>
+    <label>फसल (Commodity)
+      <input type="text" name="commodity" placeholder="e.g., Arecanut" />
+    </label>
+    <label>प्रकार (Variety)
+      <input type="text" name="variety" placeholder="e.g., Other" />
+    </label>
+    <label>ग्रेड (Grade)
+      <input type="text" name="grade" placeholder="e.g., FAQ" />
+    </label>
+    <br>
+    <button type="submit">🔍 सर्च करें</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    document.getElementById('filterForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const params = new URLSearchParams();
+      for (const [key, value] of formData.entries()) {
+        if (value.trim()) params.append(key, value.trim());
+      }
+
+      const responseDiv = document.getElementById('results');
+      responseDiv.innerHTML = "<p style='text-align:center;'>⏳ डेटा लोड हो रहा है...</p>";
+
+      try {
+        const res = await fetch(`/mandi-price?${params.toString()}`);
+        const data = await res.json();
+
+        if (data.error) {
+          responseDiv.innerHTML = `<p class="error">❌ ${data.message}</p>`;
+          return;
+        }
+
+        if (!data.records || data.records.length === 0) {
+          responseDiv.innerHTML = `<p style='text-align:center;'>😔 कोई जानकारी नहीं मिली। कृपया सही विवरण भरें।</p>`;
+          return;
+        }
+
+        let html = `
+          <h2 style="text-align:center;">📋 उपलब्ध जानकारी</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>राज्य</th>
+                <th>ज़िला</th>
+                <th>मंडी</th>
+                <th>फसल</th>
+                <th>प्रकार</th>
+                <th>ग्रेड</th>
+                <th>तारीख</th>
+                <th>न्यूनतम ₹</th>
+                <th>अधिकतम ₹</th>
+                <th>मॉडल ₹</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.records.forEach(item => {
+          html += `
+            <tr>
+              <td data-label="राज्य">${item.state}</td>
+              <td data-label="ज़िला">${item.district}</td>
+              <td data-label="मंडी">${item.market}</td>
+              <td data-label="फसल">${item.commodity}</td>
+              <td data-label="प्रकार">${item.variety}</td>
+              <td data-label="ग्रेड">${item.grade}</td>
+              <td data-label="तारीख">${item.arrival_date}</td>
+              <td data-label="न्यूनतम ₹">₹${item.min_price}</td>
+              <td data-label="अधिकतम ₹">₹${item.max_price}</td>
+              <td data-label="मॉडल ₹">₹${item.modal_price}</td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody></table>`;
+        responseDiv.innerHTML = html;
+
+      } catch (err) {
+        console.error(err);
+        responseDiv.innerHTML = `<p class="error">❌ सर्वर से डेटा नहीं मिल पाया।</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
